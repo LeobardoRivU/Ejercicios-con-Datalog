@@ -1,31 +1,35 @@
 from pyDatalog import pyDatalog
-from pyDatalog import create_terms
 
 pyDatalog.clear()
-create_terms('N, D, es_primo, divisor_existe, X')
 
-# 1. Definir operador Python personalizado: divisible por
-@pyDatalog.program()
-def _():
-    es_divisible_por(N, D) <= (N % D == 0)
+pyDatalog.create_terms('N, es_primo, no_primo')
 
-# 2. Un número tiene divisor si existe D en [2, N-1] tal que N % D == 0
-@pyDatalog.program()
-def _():
-    divisor_existe(N) <= (D in range(2, N)) & es_divisible_por(N, D)
+def es_primo_logica(n):
+    if n <= 1:
+        return False
+    for d in range(2, int(n**0.5) + 1):
+        if n % d == 0:
+            return False
+    return True
 
-# 3. Es primo si es > 1 y NO tiene ningún divisor en [2, N-1]
-@pyDatalog.program()
-def _():
-    es_primo(N) <= (N > 1) & ~divisor_existe(N)
 
-# --- Pruebas ---
+numeros = [1, 2, 3, 4, 5, 15, 17]
+for n in numeros:
+    if es_primo_logica(n):
+        pyDatalog.assert_fact('es_primo', n)
+    else:
+        pyDatalog.assert_fact('no_primo', n)
+
+es_primo(N) <= es_primo(N)
+no_primo(N) <= no_primo(N)
+
 print("Número → ¿Es primo?")
 print("-" * 25)
-
-numeros = [1, 2, 3, 4, 5, 15, 17, 19, 23, 97, 100]
-
 for n in numeros:
-    # Consulta correcta en la versión actual
-    resultado = es_primo(n)
-    print(f"{n:3d} → {'Primo' if resultado else 'No primo'}")
+    resultado = pyDatalog.ask(f'es_primo({n})')
+    print(f"{n:4d} → {'Primo' if resultado else 'No primo'}")
+
+# Bonus: todos los primos hasta 100 (mezcla lógica + hechos)
+print("\nPrimos del 2 al 100:")
+primos = [n for n in range(2, 101) if es_primo_logica(n)]
+print(primos)
